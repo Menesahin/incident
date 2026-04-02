@@ -68,6 +68,9 @@ export function IncidentTableView({ incidents }: IncidentTableViewProps) {
               <TableRow
                 key={incident.id}
                 className="hover:bg-muted/30 cursor-pointer transition-colors"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedIncidentId(incident.id); }}
                 onClick={() => setSelectedIncidentId(incident.id)}
               >
                 <TableCell className="font-medium text-sm">{incident.title}</TableCell>

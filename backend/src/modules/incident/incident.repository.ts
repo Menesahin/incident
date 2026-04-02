@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository, SelectQueryBuilder } from 'typeorm';
 import { Incident } from './entities/incident.entity.js';
+import { IncidentTimeline } from './entities/incident-timeline.entity.js';
 import { QueryIncidentDto } from './dto/query-incident.dto.js';
 
 const SORT_WHITELIST: Record<string, string> = {
@@ -67,11 +68,32 @@ export class IncidentRepository {
     return qb.getManyAndCount();
   }
 
+  /**
+   * Loads an incident with its most recent 50 timeline entries.
+   * Uses QueryBuilder to apply ORDER BY + LIMIT on the timelines join,
+   * preventing unbounded growth from loading all history.
+   *
+   * Note: TypeORM auto-applies `WHERE "deletedAt" IS NULL` on the incident
+   * table because the entity has @DeleteDateColumn — no manual filter needed.
+   */
   async findByIdWithTimeline(id: string): Promise<Incident | null> {
-    return this.repo.findOne({
-      where: { id },
-      relations: ['timelines'],
-      order: { timelines: { createdAt: 'DESC' } },
-    });
+    const incident = await this.repo
+      .createQueryBuilder('incident')
+      .where('incident.id = :id', { id })
+      .getOne();
+
+    if (!incident) return null;
+
+    const timelines = await this.repo.manager
+      .getRepository(IncidentTimeline)
+      .createQueryBuilder('timeline')
+      .where('timeline.incidentId = :id', { id })
+      .orderBy('timeline.createdAt', 'DESC')
+      .limit(50)
+      .getMany();
+
+    incident.timelines = timelines;
+
+    return incident;
   }
 }

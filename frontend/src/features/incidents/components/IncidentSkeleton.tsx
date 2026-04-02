@@ -1,9 +1,10 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants';
 
 export function IncidentSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {Array.from({ length: 6 }).map((_, i) => (
+      {Array.from({ length: DEFAULT_PAGE_SIZE }).map((_, i) => (
         <div key={i} className="bg-card rounded-lg border border-border p-4">
           <div className="flex items-center justify-between gap-2">
             <Skeleton className="h-4 w-20" />

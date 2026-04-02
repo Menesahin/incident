@@ -17,7 +17,7 @@ export function useIncidents(filters: IncidentFilters) {
   return useQuery({
     queryKey: incidentKeys.list(filters),
     queryFn: () =>
-      apiGet<Incident[]>('/incidents', filters as unknown as Record<string, unknown>),
+      apiGet<Incident[]>('/incidents', { ...filters }),
     staleTime: 15_000,
   });
 }
@@ -45,7 +45,7 @@ export function useCreateIncident() {
     mutationFn: (data: CreateIncidentInput) =>
       apiPost<Incident>('/incidents', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: incidentKeys.all }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: incidentKeys.all });
       toast.success('Incident created successfully');
     },
     onError: (error: Error) => {
@@ -94,15 +94,15 @@ export function useUpdateIncident() {
 
       if (error.message.includes('409') || error.message.includes('conflict')) {
         toast.error('Conflict: This incident was modified. Refreshing...');
-        queryClient.invalidateQueries({ queryKey: incidentKeys.all }).catch(() => {});
+        queryClient.invalidateQueries({ queryKey: incidentKeys.all });
       } else {
         toast.error(error.message);
       }
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: incidentKeys.detail(variables.id) }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: incidentKeys.lists() }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: incidentKeys.stats() }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: incidentKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: incidentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: incidentKeys.stats() });
     },
   });
 }
@@ -113,7 +113,7 @@ export function useDeleteIncident() {
   return useMutation({
     mutationFn: (id: string) => apiDelete<void>(`/incidents/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: incidentKeys.all }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: incidentKeys.all });
       toast.success('Incident deleted successfully');
     },
     onError: (error: Error) => {

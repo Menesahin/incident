@@ -15,15 +15,14 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { Redis } from 'ioredis';
 import { SocketEvent, SocketRoom } from '../../common/enums/index.js';
 
-interface ChangeEntry {
-  field: string;
-  previousValue: string | null;
-  newValue: string | null;
-}
+import { ChangeEntry } from '../../common/interfaces/change-entry.interface.js';
 
+// Decorator params are static and evaluated at class-definition time (runtime
+// in NestJS, after env is loaded). process.env is intentional here because
+// ConfigService is not available in decorator context. Falls back to '*' for dev.
 @WebSocketGateway({
   cors: {
-    origin: process.env['CORS_ORIGIN'] || 'http://localhost:5173',
+    origin: process.env['CORS_ORIGIN'] || '*',
     credentials: true,
   },
   namespace: '/incidents',
@@ -84,13 +83,13 @@ export class IncidentGateway
     this.logger.log(`Client ${client.id} left room ${room}`);
   }
 
-  emitCreated(incident: Record<string, unknown>): void {
+  public emitCreated(incident: Record<string, unknown>): void {
     this.server
       .to(SocketRoom.ALL_INCIDENTS)
       .emit(SocketEvent.INCIDENT_CREATED, { incident });
   }
 
-  emitUpdated(
+  public emitUpdated(
     incident: Record<string, unknown>,
     changes: ChangeEntry[],
   ): void {
@@ -105,7 +104,7 @@ export class IncidentGateway
     }
   }
 
-  emitDeleted(id: string): void {
+  public emitDeleted(id: string): void {
     this.server
       .to(SocketRoom.ALL_INCIDENTS)
       .emit(SocketEvent.INCIDENT_DELETED, { id });

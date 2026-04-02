@@ -9,20 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { STATUS_CONFIG } from '@/shared/constants';
+import { STATUS_CONFIG, SEVERITY_BORDER } from '@/shared/constants';
 import { formatRelativeTime } from '@/lib/utils';
 import { IncidentSeverityBadge } from './IncidentSeverityBadge';
 import { IncidentStatusBadge } from './IncidentStatusBadge';
 import { useSetSelectedIncidentId } from '../stores/incidentStore';
 import { useUpdateIncident, useDeleteIncident } from '../api/useIncidents';
 import type { Incident, Status } from '../types/incident';
-
-const SEVERITY_BORDER_COLORS: Record<string, string> = {
-  critical: '#ef4444',
-  high: '#f97316',
-  medium: '#f59e0b',
-  low: '#9ca3af',
-};
 
 interface IncidentCardProps {
   incident: Incident;
@@ -56,8 +49,10 @@ export function IncidentCard({ incident }: IncidentCardProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.2 }}
-      className="bg-card rounded-lg border border-border border-l-[3px] p-4 hover:shadow-md transition-shadow cursor-pointer"
-      style={{ borderLeftColor: SEVERITY_BORDER_COLORS[incident.severity] ?? '#9ca3af' }}
+      className={cn('bg-card rounded-lg border border-border border-l-[3px] p-4 hover:shadow-md transition-shadow cursor-pointer', SEVERITY_BORDER[incident.severity])}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedIncidentId(incident.id); }}
       onClick={() => setSelectedIncidentId(incident.id)}
     >
       {/* Title */}

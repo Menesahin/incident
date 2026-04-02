@@ -91,3 +91,10 @@ export const SERVICE_LIST = [
 ] as const;
 
 export const DEFAULT_PAGE_SIZE = 10;
+
+export const SEVERITY_BORDER: Record<string, string> = {
+  critical: 'border-l-red-500',
+  high: 'border-l-orange-500',
+  medium: 'border-l-amber-500',
+  low: 'border-l-gray-400',
+} as const;

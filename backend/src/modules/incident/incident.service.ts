@@ -22,12 +22,7 @@ import {
   INCIDENT_QUEUE,
   TimelineAction,
 } from '../../common/enums/index.js';
-
-interface ChangeEntry {
-  field: string;
-  previousValue: string | null;
-  newValue: string | null;
-}
+import { ChangeEntry } from '../../common/interfaces/change-entry.interface.js';
 
 @Injectable()
 export class IncidentService {
@@ -178,6 +173,9 @@ export class IncidentService {
     try {
       await this.eventQueue.add(event, data);
     } catch (error) {
+      // Sync fallback: timeline creation + socket emit ONLY runs here when
+      // the queue is unavailable. When the queue IS working, the consumer
+      // (IncidentConsumer) handles timeline + socket — no duplicate path.
       this.logger.warn(
         `Queue unavailable for ${event}, sync fallback: ${error instanceof Error ? error.message : 'unknown'}`,
       );

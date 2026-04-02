@@ -29,7 +29,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     socket.on('connect', () => {
       if (wasConnected) {
-        queryClient.invalidateQueries().catch(() => {});
+        queryClient.invalidateQueries();
         toast.success('Reconnected to server');
       }
       wasConnected = true;

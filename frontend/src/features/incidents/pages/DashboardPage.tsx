@@ -22,7 +22,7 @@ export function DashboardPage() {
     if (!socket) return;
 
     const handleCreated = (payload: { incident: Incident }) => {
-      queryClient.invalidateQueries({ queryKey: incidentKeys.all }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: incidentKeys.all });
       toast.info(`New incident: ${payload.incident.title}`);
     };
 
@@ -34,12 +34,12 @@ export function DashboardPage() {
             ? { ...prev, data: payload.incident }
             : undefined,
       );
-      queryClient.invalidateQueries({ queryKey: incidentKeys.lists() }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: incidentKeys.stats() }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: incidentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: incidentKeys.stats() });
     };
 
     const handleDeleted = (payload: { id: string }) => {
-      queryClient.invalidateQueries({ queryKey: incidentKeys.all }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: incidentKeys.all });
       if (selectedId === payload.id) {
         setSelectedId(null);
       }

@@ -6,12 +6,7 @@ import { Job } from 'bullmq';
 import { IncidentTimeline } from './entities/incident-timeline.entity.js';
 import { IncidentGateway } from './incident.gateway.js';
 import { INCIDENT_QUEUE, QueueEvent, TimelineAction } from '../../common/enums/index.js';
-
-interface ChangeEntry {
-  field: string;
-  previousValue: string | null;
-  newValue: string | null;
-}
+import { ChangeEntry } from '../../common/interfaces/change-entry.interface.js';
 
 @Processor(INCIDENT_QUEUE, { concurrency: 1 })
 export class IncidentConsumer extends WorkerHost {
