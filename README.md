@@ -1,8 +1,12 @@
 # Real-Time Incident Management Panel
 
-A centralized incident management dashboard for monitoring and managing service incidents across Payment API, Auth Service, and Notification Worker. Features real-time updates via WebSocket, async event processing with BullMQ, and a clean editorial React dashboard.
+<div align="center">
 
-**Live Demo:** [http://158.220.112.110](http://158.220.112.110)
+### [VIEW LIVE DEMO](http://158.220.112.110)
+
+</div>
+
+A centralized incident management dashboard for monitoring and managing service incidents across Payment API, Auth Service, and Notification Worker. Features real-time updates via WebSocket, async event processing with BullMQ, and a clean editorial React dashboard.
 
 | Dashboard | Incident Detail |
 |-----------|----------------|
