@@ -4,7 +4,9 @@ A centralized incident management dashboard for monitoring and managing service 
 
 **Live Demo:** [http://158.220.112.110](http://158.220.112.110)
 
-![Dashboard Preview](assets/dashboard-preview.png)
+| Dashboard | Incident Detail |
+|-----------|----------------|
+| ![Dashboard](assets/dashboard-list.png) | ![Detail](assets/dashboard-detail.png) |
 
 ## Tech Stack
 
