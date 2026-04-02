@@ -5,8 +5,18 @@ import { Repository } from 'typeorm';
 import { Job } from 'bullmq';
 import { IncidentTimeline } from './entities/incident-timeline.entity.js';
 import { IncidentGateway } from './incident.gateway.js';
-import { INCIDENT_QUEUE, QueueEvent, TimelineAction } from '../../common/enums/index.js';
+import { IncidentRepository } from './incident.repository.js';
+import { INCIDENT_QUEUE, QueueEvent, TimelineAction, Status } from '../../common/enums/index.js';
 import { ChangeEntry } from '../../common/interfaces/change-entry.interface.js';
+import { Severity } from '../../common/enums/severity.enum.js';
+import { ServiceName } from '../../common/enums/service-name.enum.js';
+
+interface IngestPayload {
+  title: string;
+  description?: string;
+  service: ServiceName;
+  severity: Severity;
+}
 
 @Processor(INCIDENT_QUEUE, { concurrency: 1 })
 export class IncidentConsumer extends WorkerHost {
@@ -16,6 +26,7 @@ export class IncidentConsumer extends WorkerHost {
     @InjectRepository(IncidentTimeline)
     private readonly timelineRepo: Repository<IncidentTimeline>,
     private readonly gateway: IncidentGateway,
+    private readonly incidentRepo: IncidentRepository,
   ) {
     super();
   }
@@ -31,11 +42,18 @@ export class IncidentConsumer extends WorkerHost {
       case QueueEvent.INCIDENT_DELETED:
         await this.handleDeleted(job);
         break;
+      case QueueEvent.INCIDENT_INGEST:
+        await this.handleIngest(job);
+        break;
       default:
         this.logger.warn(`Unknown job name: ${job.name}`);
     }
   }
 
+  /**
+   * Handles incidents created via HTTP (Service → Queue → Consumer).
+   * Incident already exists in DB; consumer creates timeline + emits socket.
+   */
   private async handleCreated(job: Job): Promise<void> {
     const { incident } = job.data as { incident: Record<string, unknown> };
 
@@ -45,6 +63,36 @@ export class IncidentConsumer extends WorkerHost {
     });
 
     this.gateway.emitCreated(incident);
+  }
+
+  /**
+   * Handles incidents ingested directly via queue from external services.
+   * Creates the incident in DB, then creates timeline + emits socket.
+   *
+   * External services push to the queue:
+   *   queue.add('incident.ingest', { title, description?, service, severity })
+   */
+  private async handleIngest(job: Job): Promise<void> {
+    const payload = job.data as IngestPayload;
+
+    const incident = await this.incidentRepo.save({
+      title: payload.title,
+      description: payload.description ?? null,
+      service: payload.service,
+      severity: payload.severity,
+      status: Status.OPEN,
+    });
+
+    this.logger.log(
+      `Ingested incident: ${incident.id} [${incident.severity}] ${incident.title}`,
+    );
+
+    await this.timelineRepo.save({
+      incidentId: incident.id,
+      action: TimelineAction.CREATED,
+    });
+
+    this.gateway.emitCreated(incident as unknown as Record<string, unknown>);
   }
 
   private async handleUpdated(job: Job): Promise<void> {
@@ -73,7 +121,7 @@ export class IncidentConsumer extends WorkerHost {
     };
 
     await this.timelineRepo.save({
-      incidentId: incident['id'] as string ?? id,
+      incidentId: (incident['id'] as string) ?? id,
       action: TimelineAction.DELETED,
     });
 
