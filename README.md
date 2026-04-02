@@ -2,7 +2,13 @@
 
 <div align="center">
 
-### [VIEW LIVE DEMO](http://158.220.112.110)
+<br/>
+
+[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-158.220.112.110-00C853?style=for-the-badge&logo=googlechrome&logoColor=white)](http://158.220.112.110)
+
+<h3><a href="http://158.220.112.110">http://158.220.112.110</a></h3>
+
+<br/>
 
 </div>
 
