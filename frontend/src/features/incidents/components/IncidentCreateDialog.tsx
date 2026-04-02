@@ -49,8 +49,8 @@ export function IncidentCreateDialog({
     defaultValues: {
       title: '',
       description: '',
-      service: 'Payment API',
-      severity: 'medium',
+      service: 'PAYMENT_API',
+      severity: 'MEDIUM',
     },
   });
 

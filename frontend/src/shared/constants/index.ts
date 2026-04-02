@@ -26,28 +26,28 @@ interface SeverityConfigItem {
 }
 
 export const SEVERITY_CONFIG: Record<string, SeverityConfigItem> = {
-  critical: {
+  CRITICAL: {
     label: 'Critical',
     color: 'text-red-600',
     dotColor: 'bg-red-500',
     glowClass: '',
     icon: AlertTriangle,
   },
-  high: {
+  HIGH: {
     label: 'High',
     color: 'text-orange-600',
     dotColor: 'bg-orange-500',
     glowClass: '',
     icon: ArrowUp,
   },
-  medium: {
+  MEDIUM: {
     label: 'Medium',
     color: 'text-amber-600',
     dotColor: 'bg-amber-500',
     glowClass: '',
     icon: Minus,
   },
-  low: {
+  LOW: {
     label: 'Low',
     color: 'text-gray-500',
     dotColor: 'bg-gray-400',
@@ -64,19 +64,19 @@ interface StatusConfigItem {
 }
 
 export const STATUS_CONFIG: Record<string, StatusConfigItem> = {
-  open: {
+  OPEN: {
     label: 'Open',
     color: 'text-red-600',
     dotColor: 'bg-red-500',
     icon: CircleAlert,
   },
-  investigating: {
+  INVESTIGATING: {
     label: 'Investigating',
     color: 'text-orange-600',
     dotColor: 'bg-orange-500',
     icon: Search,
   },
-  resolved: {
+  RESOLVED: {
     label: 'Resolved',
     color: 'text-green-600',
     dotColor: 'bg-green-500',
@@ -85,16 +85,22 @@ export const STATUS_CONFIG: Record<string, StatusConfigItem> = {
 } as const;
 
 export const SERVICE_LIST = [
-  'Payment API',
-  'Auth Service',
-  'Notification Worker',
+  'PAYMENT_API',
+  'AUTH_SERVICE',
+  'NOTIFICATION_WORKER',
 ] as const;
+
+export const SERVICE_LABELS: Record<string, string> = {
+  PAYMENT_API: 'Payment API',
+  AUTH_SERVICE: 'Auth Service',
+  NOTIFICATION_WORKER: 'Notification Worker',
+} as const;
 
 export const DEFAULT_PAGE_SIZE = 10;
 
 export const SEVERITY_BORDER: Record<string, string> = {
-  critical: 'border-l-red-500',
-  high: 'border-l-orange-500',
-  medium: 'border-l-amber-500',
-  low: 'border-l-gray-400',
+  CRITICAL: 'border-l-red-500',
+  HIGH: 'border-l-orange-500',
+  MEDIUM: 'border-l-amber-500',
+  LOW: 'border-l-gray-400',
 } as const;

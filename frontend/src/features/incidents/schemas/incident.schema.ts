@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { SERVICE_LIST } from '@/shared/constants';
 
-const severityEnum = z.enum(['low', 'medium', 'high', 'critical']);
-const statusEnum = z.enum(['open', 'investigating', 'resolved']);
+const severityEnum = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+const statusEnum = z.enum(['OPEN', 'INVESTIGATING', 'RESOLVED']);
 const serviceEnum = z.enum(SERVICE_LIST);
 
 export const createIncidentSchema = z.object({

@@ -1,11 +1,11 @@
-export type Severity = 'low' | 'medium' | 'high' | 'critical';
+export type Severity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
-export type Status = 'open' | 'investigating' | 'resolved';
+export type Status = 'OPEN' | 'INVESTIGATING' | 'RESOLVED';
 
 export type ServiceName =
-  | 'Payment API'
-  | 'Auth Service'
-  | 'Notification Worker';
+  | 'PAYMENT_API'
+  | 'AUTH_SERVICE'
+  | 'NOTIFICATION_WORKER';
 
 export interface Incident {
   id: string;
@@ -47,8 +47,6 @@ export interface IncidentFilters {
 
 export interface IncidentStats {
   total: number;
-  open: number;
-  investigating: number;
-  resolved: number;
-  bySeverity: Record<Severity, number>;
+  byStatus: Record<string, number>;
+  bySeverity: Record<string, number>;
 }

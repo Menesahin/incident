@@ -26,17 +26,17 @@ export function IncidentStats() {
   const statCards = [
     {
       title: 'Open',
-      value: stats.open,
+      value: stats.byStatus['OPEN'] ?? 0,
       borderColor: 'border-t-red-500',
     },
     {
       title: 'Investigating',
-      value: stats.investigating,
+      value: stats.byStatus['INVESTIGATING'] ?? 0,
       borderColor: 'border-t-orange-500',
     },
     {
       title: 'Resolved',
-      value: stats.resolved,
+      value: stats.byStatus['RESOLVED'] ?? 0,
       borderColor: 'border-t-green-500',
     },
     {
@@ -46,7 +46,7 @@ export function IncidentStats() {
     },
   ];
 
-  const severities: Severity[] = ['critical', 'high', 'medium', 'low'];
+  const severities: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
 
   return (
     <div className="space-y-4">

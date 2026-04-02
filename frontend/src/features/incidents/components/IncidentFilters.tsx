@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { SERVICE_LIST } from '@/shared/constants';
+import { SERVICE_LIST, SERVICE_LABELS } from '@/shared/constants';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import {
   useFilters,
@@ -55,9 +55,9 @@ export function IncidentFilters() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="">All Statuses</SelectItem>
-          <SelectItem value="open">Open</SelectItem>
-          <SelectItem value="investigating">Investigating</SelectItem>
-          <SelectItem value="resolved">Resolved</SelectItem>
+          <SelectItem value="OPEN">Open</SelectItem>
+          <SelectItem value="INVESTIGATING">Investigating</SelectItem>
+          <SelectItem value="RESOLVED">Resolved</SelectItem>
         </SelectContent>
       </Select>
 
@@ -75,10 +75,10 @@ export function IncidentFilters() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="">All Severities</SelectItem>
-          <SelectItem value="critical">Critical</SelectItem>
-          <SelectItem value="high">High</SelectItem>
-          <SelectItem value="medium">Medium</SelectItem>
-          <SelectItem value="low">Low</SelectItem>
+          <SelectItem value="CRITICAL">Critical</SelectItem>
+          <SelectItem value="HIGH">High</SelectItem>
+          <SelectItem value="MEDIUM">Medium</SelectItem>
+          <SelectItem value="LOW">Low</SelectItem>
         </SelectContent>
       </Select>
 
@@ -98,7 +98,7 @@ export function IncidentFilters() {
           <SelectItem value="">All Services</SelectItem>
           {SERVICE_LIST.map((service) => (
             <SelectItem key={service} value={service}>
-              {service}
+              {SERVICE_LABELS[service] ?? service}
             </SelectItem>
           ))}
         </SelectContent>

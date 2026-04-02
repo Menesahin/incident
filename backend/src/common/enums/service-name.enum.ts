@@ -1,5 +1,5 @@
 export enum ServiceName {
-  PAYMENT_API = 'Payment API',
-  AUTH_SERVICE = 'Auth Service',
-  NOTIFICATION_WORKER = 'Notification Worker',
+  PAYMENT_API = 'PAYMENT_API',
+  AUTH_SERVICE = 'AUTH_SERVICE',
+  NOTIFICATION_WORKER = 'NOTIFICATION_WORKER',
 }

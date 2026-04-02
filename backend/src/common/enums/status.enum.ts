@@ -1,5 +1,5 @@
 export enum Status {
-  OPEN = 'open',
-  INVESTIGATING = 'investigating',
-  RESOLVED = 'resolved',
+  OPEN = 'OPEN',
+  INVESTIGATING = 'INVESTIGATING',
+  RESOLVED = 'RESOLVED',
 }
