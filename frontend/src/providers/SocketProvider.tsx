@@ -13,7 +13,10 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const socketRef = useRef<Socket | null>(null);
 
   if (!socketRef.current) {
-    socketRef.current = io('http://localhost:3000/incidents', {
+    const socketUrl = import.meta.env.DEV
+      ? 'http://localhost:3000/incidents'
+      : '/incidents';
+    socketRef.current = io(socketUrl, {
       transports: ['websocket', 'polling'],
       autoConnect: false,
     });
