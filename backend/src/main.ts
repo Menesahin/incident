@@ -42,19 +42,23 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TransformInterceptor());
 
   // 5. CORS
+  const corsOrigin = process.env['CORS_ORIGIN'] || 'http://localhost:5173';
   app.enableCors({
-    origin: process.env['CORS_ORIGIN'] || 'http://localhost:5173',
+    origin: corsOrigin,
     credentials: true,
   });
 
-  // 6. Swagger
-  const config = new DocumentBuilder()
-    .setTitle('Incident Management API')
-    .setDescription('Real-time incident tracking and management')
-    .setVersion('1.0')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  // 6. Swagger — only in development
+  if (process.env['NODE_ENV'] !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Incident Management API')
+      .setDescription('Real-time incident tracking and management')
+      .setVersion('1.0')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+    logger.log('Swagger docs enabled at /api/docs');
+  }
 
   // 7. Graceful shutdown
   app.enableShutdownHooks();
@@ -62,7 +66,6 @@ async function bootstrap() {
   const port = process.env['PORT'] || 3000;
   await app.listen(port);
   logger.log(`Application listening on port ${port}`);
-  logger.log(`Swagger docs available at http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

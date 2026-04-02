@@ -2,23 +2,19 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: incident
-      POSTGRES_PASSWORD: incident123
-      POSTGRES_DB: incident_db
-    ports:
-      - '5433:5432'
+      POSTGRES_USER: ${POSTGRES_USER:-incident}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-incident123}
+      POSTGRES_DB: ${POSTGRES_DB:-incident_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U incident']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-incident}']
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    ports:
-      - '6379:6379'
     volumes:
       - redis_data:/data
     healthcheck:
@@ -32,13 +28,13 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql://incident:incident123@postgres:5432/incident_db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-incident}:${POSTGRES_PASSWORD:-incident123}@postgres:5432/${POSTGRES_DB:-incident_db}
       REDIS_URL: redis://redis:6379
       PORT: '3000'
-      NODE_ENV: production
-      CORS_ORIGIN: http://localhost
+      NODE_ENV: ${NODE_ENV:-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
     ports:
-      - '3000:3000'
+      - '${BACKEND_PORT:-3000}:3000'
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,7 +51,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - '80:80'
+      - '${FRONTEND_PORT:-80}:80'
     depends_on:
       - backend
 
@@ -65,7 +61,7 @@ services:
       dockerfile: Dockerfile
     command: node dist/database/seed.js
     environment:
-      DATABASE_URL: postgresql://incident:incident123@postgres:5432/incident_db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-incident}:${POSTGRES_PASSWORD:-incident123}@postgres:5432/${POSTGRES_DB:-incident_db}
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
     depends_on:
