@@ -1,15 +1,32 @@
 import { formatRelativeTime } from '@/lib/utils';
+import { STATUS_CONFIG, SEVERITY_CONFIG } from '@/shared/constants';
 import type { IncidentTimeline as TimelineEntry } from '../types/incident';
 
 interface IncidentTimelineProps {
   timelines: TimelineEntry[];
 }
 
+const ACTION_LABELS: Record<string, string> = {
+  CREATED: 'Incident created',
+  DELETED: 'Incident deleted',
+  STATUS_CHANGED: 'Status changed',
+  SEVERITY_CHANGED: 'Severity changed',
+  DESCRIPTION_CHANGED: 'Description updated',
+};
+
+function formatValue(field: string | null, value: string | null): string {
+  if (!value) return '—';
+  if (field === 'status') return STATUS_CONFIG[value]?.label ?? value;
+  if (field === 'severity') return SEVERITY_CONFIG[value]?.label ?? value;
+  return value;
+}
+
 function formatDescription(entry: TimelineEntry): string {
-  if (entry.changes) {
-    return `${entry.changes.field}: ${entry.changes.from} \u2192 ${entry.changes.to}`;
+  const label = ACTION_LABELS[entry.action] ?? entry.action;
+  if (entry.field && entry.previousValue != null && entry.newValue != null) {
+    return `${label}: ${formatValue(entry.field, entry.previousValue)} → ${formatValue(entry.field, entry.newValue)}`;
   }
-  return entry.description;
+  return label;
 }
 
 export function IncidentTimeline({ timelines }: IncidentTimelineProps) {

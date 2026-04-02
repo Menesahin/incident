@@ -25,15 +25,10 @@ export interface IncidentTimeline {
   id: string;
   incidentId: string;
   action: string;
-  description: string;
-  changes: IncidentChange | null;
+  field: string | null;
+  previousValue: string | null;
+  newValue: string | null;
   createdAt: string;
-}
-
-export interface IncidentChange {
-  field: string;
-  from: string;
-  to: string;
 }
 
 export interface IncidentFilters {
