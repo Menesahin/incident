@@ -71,6 +71,69 @@ A centralized incident management dashboard for monitoring and managing service 
                                   └────────────────────────┘
 ```
 
+### Request Flow
+
+```
+HTTP Channel (UI / API Clients)
+═══════════════════════════════════════════════════════════════
+
+  Client ──POST /incidents──▶ Controller ──validate──▶ Service
+                                                         │
+                                                    save to DB
+                                                         │
+                                                    queue.add('incident.created')
+                                                         │
+                                                         ▼
+                                                  ┌──── Redis Queue ◄──── External Service
+                                                  │     (BullMQ)          queue.add('incident.ingest')
+                                                  │
+                                                  ▼
+Queue Channel (External Services)           Event Consumer
+═══════════════════════════════════    ┌──────────────────────┐
+                                      │ 1. Write timeline    │
+  Payment API ───┐                    │ 2. Socket broadcast  │
+  Auth Service ──┤── queue.add() ──▶  │ 3. (ingest: save DB) │
+  Notif Worker ──┘                    └──────────┬───────────┘
+                                                 │
+                                                 ▼
+                                        Socket.IO Rooms
+                                      ┌─────────────────┐
+                                      │ incidents:all    │──▶ All dashboard clients
+                                      │ incident:{id}   │──▶ Detail sheet viewers
+                                      └─────────────────┘
+
+Real-time Update Flow
+═══════════════════════════════════════════════════════════════
+
+  DB Write ──▶ Queue Event ──▶ Consumer ──▶ Socket.IO ──▶ Frontend
+                                               │
+                                          invalidateQueries()
+                                               │
+                                          TanStack Query refetch
+                                               │
+                                          React re-render (animated)
+```
+
+### Optimistic Locking Flow
+
+```
+  User A: GET /incidents/1         (version: 3)
+  User B: GET /incidents/1         (version: 3)
+
+  User A: PATCH {status, version: 3}  ──▶ UPDATE ... WHERE version=3 ──▶ ✅ (version → 4)
+  User B: PATCH {status, version: 3}  ──▶ UPDATE ... WHERE version=3 ──▶ ❌ 409 Conflict
+
+  Frontend: toast("Modified by another user") → invalidateQueries() → fresh data
+```
+
+### Graceful Degradation (Redis Down)
+
+```
+  Normal:    Service ──▶ Queue ──▶ Consumer ──▶ Timeline + Socket
+  Fallback:  Service ──▶ Queue ✗ ──▶ Sync: Timeline write + Socket emit directly
+  Result:    CRUD always works. Real-time degrades to single-instance.
+```
+
 ## Prerequisites
 
 - Docker + Docker Compose
