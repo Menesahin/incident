@@ -53,14 +53,22 @@ A centralized incident management dashboard for monitoring and managing service 
                                   │  (BullMQ Worker)       │
                                   │  • Create timeline     │
                                   │  • Socket.IO broadcast │
+                                  │  • Queue ingestion     │
                                   └────────────────────────┘
-                                          │
-                                          ▼
-                                  ┌───────────────┐
-                                  │  PostgreSQL 16 │
-                                  │ • incidents    │
-                                  │ • timelines    │
-                                  └───────────────┘
+                                        │         ▲
+                                        ▼         │
+                                  ┌───────────┐   │
+                                  │PostgreSQL  │   │  incident.ingest
+                                  │• incidents │   │  (external services
+                                  │• timelines │   │   push directly)
+                                  └───────────┘   │
+                                                  │
+                                  ┌───────────────────────┐
+                                  │  External Services     │
+                                  │  Payment API           │
+                                  │  Auth Service          │
+                                  │  Notification Worker   │
+                                  └────────────────────────┘
 ```
 
 ## Prerequisites
@@ -125,9 +133,9 @@ pnpm dev
 |-------|------|-------------|
 | `page` | number | Page number (default: 1) |
 | `limit` | number | Items per page (default: 10, max: 100) |
-| `status` | enum | `open`, `investigating`, `resolved` |
-| `severity` | enum | `low`, `medium`, `high`, `critical` |
-| `service` | enum | `Payment API`, `Auth Service`, `Notification Worker` |
+| `status` | enum | `OPEN`, `INVESTIGATING`, `RESOLVED` |
+| `severity` | enum | `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` |
+| `service` | enum | `PAYMENT_API`, `AUTH_SERVICE`, `NOTIFICATION_WORKER` |
 | `search` | string | Search in title and description (ILIKE) |
 | `sortBy` | string | Sort field (default: `createdAt`) |
 | `sortOrder` | string | `ASC` or `DESC` (default: `DESC`) |
@@ -146,6 +154,34 @@ pnpm dev
 
 > **Note:** Swagger documentation is only available in development mode (`NODE_ENV=development`).
 
+## Queue-Based Ingestion (External Services)
+
+External services can push incidents directly to the BullMQ queue without going through HTTP. The consumer creates the incident in the database, writes a timeline entry, and broadcasts via Socket.IO — the same pipeline as HTTP-created incidents.
+
+**Two ingestion channels:**
+
+| Channel | Flow | Use Case |
+|---------|------|----------|
+| **HTTP** | `POST /api/v1/incidents` → Service → DB → Queue → Consumer (timeline + socket) | Dashboard UI, API clients |
+| **Queue** | `queue.add('incident.ingest', payload)` → Consumer → DB + timeline + socket | External services, microservices |
+
+**Queue job format:**
+
+```typescript
+import { Queue } from 'bullmq';
+
+const queue = new Queue('incident-events', {
+  connection: { host: 'redis', port: 6379 },
+});
+
+await queue.add('incident.ingest', {
+  title: 'Database timeout on payment service',
+  description: 'Users receiving timeout errors during checkout',
+  service: 'PAYMENT_API',       // PAYMENT_API | AUTH_SERVICE | NOTIFICATION_WORKER
+  severity: 'CRITICAL',         // CRITICAL | HIGH | MEDIUM | LOW
+});
+```
+
 ## Architecture Decisions
 
 | Decision | Rationale |
@@ -154,6 +190,8 @@ pnpm dev
 | **Socket.IO + Redis Adapter** | Bidirectional communication, built-in reconnect/fallback, room-based event routing, multi-instance support. |
 | **Optimistic Locking** | `@VersionColumn` provides lock-free throughput, DB-level atomicity, no deadlock risk. Conflicts handled with HTTP 409 + client refetch. |
 | **Async Event Pipeline** | Service produces events to BullMQ queue. Consumer handles side-effects (timeline, socket broadcast). Decoupled, retryable, extensible. |
+| **Dual Ingestion** | HTTP for UI/API clients, queue for external microservices. Both channels converge at the same consumer for consistent processing. |
+| **UPPER_CASE Enums** | All enum values use consistent UPPER_CASE convention (OPEN, CRITICAL, PAYMENT_API). Display labels mapped separately. |
 | **Graceful Degradation** | CRUD always works even if Redis is down. Queue operations fall back to synchronous processing. |
 | **Repository Pattern** | QueryBuilder complexity isolated from service layer. SORT_WHITELIST prevents SQL injection on sort fields. |
 | **Soft Delete** | `@DeleteDateColumn` preserves audit trail. Incidents are never physically removed. |
