@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { QUEUE_RETRY_ATTEMPTS } from '../common/constants/index.js';
+import { QUEUE_RETRY_ATTEMPTS } from '../common/constants/index';
 
 export const redisConfigFactory = (config: ConfigService) => {
   const redisUrl = new URL(config.getOrThrow<string>('REDIS_URL'));

@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany, Index } from 'typeorm';
-import { BaseEntity } from '../../../common/entities/base.entity.js';
-import { Severity } from '../../../common/enums/severity.enum.js';
-import { Status } from '../../../common/enums/status.enum.js';
-import { ServiceName } from '../../../common/enums/service-name.enum.js';
-import { IncidentTimeline } from './incident-timeline.entity.js';
+import { BaseEntity } from '../../../common/entities/base.entity';
+import { Severity } from '../../../common/enums/severity.enum';
+import { Status } from '../../../common/enums/status.enum';
+import { ServiceName } from '../../../common/enums/service-name.enum';
+import { IncidentTimeline } from './incident-timeline.entity';
 
 @Entity('incidents')
 @Index(['status', 'createdAt'])

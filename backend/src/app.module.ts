@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
-import { Incident } from './modules/incident/entities/incident.entity.js';
-import { IncidentTimeline } from './modules/incident/entities/incident-timeline.entity.js';
-import { HealthModule } from './modules/health/health.module.js';
-import { IncidentModule } from './modules/incident/incident.module.js';
-import { QUEUE_RETRY_ATTEMPTS } from './common/constants/index.js';
+import { Incident } from './modules/incident/entities/incident.entity';
+import { IncidentTimeline } from './modules/incident/entities/incident-timeline.entity';
+import { HealthModule } from './modules/health/health.module';
+import { IncidentModule } from './modules/incident/incident.module';
+import { QUEUE_RETRY_ATTEMPTS } from './common/constants/index';
 
 @Module({
   imports: [

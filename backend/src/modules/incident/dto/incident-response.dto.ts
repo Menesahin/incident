@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Severity } from '../../../common/enums/severity.enum.js';
-import { Status } from '../../../common/enums/status.enum.js';
-import { ServiceName } from '../../../common/enums/service-name.enum.js';
+import { Severity } from '../../../common/enums/severity.enum';
+import { Status } from '../../../common/enums/status.enum';
+import { ServiceName } from '../../../common/enums/service-name.enum';
 
 export class TimelineResponseDto {
   @ApiProperty({ format: 'uuid' })

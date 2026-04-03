@@ -1,4 +1,4 @@
-import { PaginationQueryDto } from './pagination-query.dto.js';
+import { PaginationQueryDto } from './pagination-query.dto';
 
 export interface PaginationMeta {
   page: number;

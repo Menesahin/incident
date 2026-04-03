@@ -1,7 +1,7 @@
 import { IsString, IsEnum, IsOptional, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Status } from '../../../common/enums/status.enum.js';
-import { Severity } from '../../../common/enums/severity.enum.js';
+import { Status } from '../../../common/enums/status.enum';
+import { Severity } from '../../../common/enums/severity.enum';
 
 export class UpdateIncidentDto {
   @ApiPropertyOptional({ enum: Status, example: Status.INVESTIGATING })
@@ -19,7 +19,10 @@ export class UpdateIncidentDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ description: 'Current version for optimistic locking', example: 1 })
+  @ApiProperty({
+    description: 'Current version for optimistic locking',
+    example: 1,
+  })
   @IsNumber()
   version!: number;
 }

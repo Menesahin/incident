@@ -7,8 +7,8 @@ import {
   Index,
   JoinColumn,
 } from 'typeorm';
-import { TimelineAction } from '../../../common/enums/timeline-action.enum.js';
-import { Incident } from './incident.entity.js';
+import { TimelineAction } from '../../../common/enums/timeline-action.enum';
+import { Incident } from './incident.entity';
 
 @Entity('incident_timelines')
 @Index(['incidentId', 'createdAt'])

@@ -1,17 +1,28 @@
-import { IsString, IsNotEmpty, MaxLength, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  MaxLength,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Severity } from '../../../common/enums/severity.enum.js';
-import { ServiceName } from '../../../common/enums/service-name.enum.js';
-import { MAX_TITLE_LENGTH } from '../../../common/constants/index.js';
+import { Severity } from '../../../common/enums/severity.enum';
+import { ServiceName } from '../../../common/enums/service-name.enum';
+import { MAX_TITLE_LENGTH } from '../../../common/constants/index';
 
 export class CreateIncidentDto {
-  @ApiProperty({ example: 'Payment gateway timeout', maxLength: MAX_TITLE_LENGTH })
+  @ApiProperty({
+    example: 'Payment gateway timeout',
+    maxLength: MAX_TITLE_LENGTH,
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(MAX_TITLE_LENGTH)
   title!: string;
 
-  @ApiPropertyOptional({ example: 'Stripe API returning 504 errors for 10% of requests' })
+  @ApiPropertyOptional({
+    example: 'Stripe API returning 504 errors for 10% of requests',
+  })
   @IsString()
   @IsOptional()
   description?: string;

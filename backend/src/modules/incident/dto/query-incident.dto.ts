@@ -1,9 +1,9 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Status } from '../../../common/enums/status.enum.js';
-import { Severity } from '../../../common/enums/severity.enum.js';
-import { ServiceName } from '../../../common/enums/service-name.enum.js';
-import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto.js';
+import { Status } from '../../../common/enums/status.enum';
+import { Severity } from '../../../common/enums/severity.enum';
+import { ServiceName } from '../../../common/enums/service-name.enum';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export class QueryIncidentDto extends PaginationQueryDto {
   @ApiPropertyOptional({ enum: Status })

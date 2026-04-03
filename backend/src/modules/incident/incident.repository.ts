@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository, SelectQueryBuilder } from 'typeorm';
-import { Incident } from './entities/incident.entity.js';
-import { IncidentTimeline } from './entities/incident-timeline.entity.js';
-import { QueryIncidentDto } from './dto/query-incident.dto.js';
+import { Incident } from './entities/incident.entity';
+import { IncidentTimeline } from './entities/incident-timeline.entity';
+import { QueryIncidentDto } from './dto/query-incident.dto';
 
 const SORT_WHITELIST: Record<string, string> = {
   createdAt: 'incident.createdAt',
@@ -59,7 +59,8 @@ export class IncidentRepository {
       );
     }
 
-    const sortColumn = SORT_WHITELIST[query.sortBy ?? ''] ?? 'incident.createdAt';
+    const sortColumn =
+      SORT_WHITELIST[query.sortBy ?? ''] ?? 'incident.createdAt';
     const sortOrder = query.sortOrder === 'ASC' ? 'ASC' : 'DESC';
     qb.orderBy(sortColumn, sortOrder);
 
