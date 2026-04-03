@@ -17,19 +17,23 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { IncidentService } from './incident.service.js';
-import { CreateIncidentDto } from './dto/create-incident.dto.js';
-import { UpdateIncidentDto } from './dto/update-incident.dto.js';
-import { QueryIncidentDto } from './dto/query-incident.dto.js';
-import { IncidentResponseDto } from './dto/incident-response.dto.js';
-import { Severity } from '../../common/enums/severity.enum.js';
-import { Status } from '../../common/enums/status.enum.js';
-import { ServiceName } from '../../common/enums/service-name.enum.js';
+import { IncidentService } from './incident.service';
+import { IncidentStatsService } from './incident-stats.service';
+import { CreateIncidentDto } from './dto/create-incident.dto';
+import { UpdateIncidentDto } from './dto/update-incident.dto';
+import { QueryIncidentDto } from './dto/query-incident.dto';
+import { IncidentResponseDto } from './dto/incident-response.dto';
+import { Severity } from '../../common/enums/severity.enum';
+import { Status } from '../../common/enums/status.enum';
+import { ServiceName } from '../../common/enums/service-name.enum';
 
 @ApiTags('Incidents')
 @Controller('incidents')
 export class IncidentController {
-  constructor(private readonly incidentService: IncidentService) {}
+  constructor(
+    private readonly incidentService: IncidentService,
+    private readonly statsService: IncidentStatsService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new incident' })
@@ -48,7 +52,12 @@ export class IncidentController {
   @ApiOperation({ summary: 'List incidents with filters and pagination' })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiQuery({ name: 'sortBy', required: false, type: String, example: 'createdAt' })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    type: String,
+    example: 'createdAt',
+  })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['ASC', 'DESC'] })
   @ApiQuery({ name: 'status', required: false, enum: Status })
   @ApiQuery({ name: 'severity', required: false, enum: Severity })
@@ -66,7 +75,7 @@ export class IncidentController {
     description: 'Incident statistics by status and severity',
   })
   async getStats() {
-    return this.incidentService.getStats();
+    return this.statsService.getStats();
   }
 
   @Get(':id')

@@ -1,14 +1,19 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
-import { Incident } from './entities/incident.entity.js';
-import { IncidentTimeline } from './entities/incident-timeline.entity.js';
-import { IncidentRepository } from './incident.repository.js';
-import { IncidentService } from './incident.service.js';
-import { IncidentController } from './incident.controller.js';
-import { IncidentGateway } from './incident.gateway.js';
-import { IncidentConsumer } from './incident.consumer.js';
-import { INCIDENT_QUEUE } from '../../common/enums/index.js';
+import { Incident } from './entities/incident.entity';
+import { IncidentTimeline } from './entities/incident-timeline.entity';
+import { IncidentRepository } from './incident.repository';
+import { IncidentTimelineService } from './incident-timeline.service';
+import { IncidentEventProcessor } from './incident-event.processor';
+import { IncidentEventDispatcher } from './incident-event.dispatcher';
+import { IncidentService } from './incident.service';
+import { IncidentStatsService } from './incident-stats.service';
+import { IncidentController } from './incident.controller';
+import { IncidentGateway } from './incident.gateway';
+import { IncidentConsumer } from './incident.consumer';
+import { INCIDENT_NOTIFIER } from './interfaces/incident-notifier.interface';
+import { INCIDENT_QUEUE } from '../../common/enums/index';
 
 @Module({
   imports: [
@@ -18,8 +23,13 @@ import { INCIDENT_QUEUE } from '../../common/enums/index.js';
   controllers: [IncidentController],
   providers: [
     IncidentRepository,
-    IncidentService,
+    IncidentTimelineService,
     IncidentGateway,
+    { provide: INCIDENT_NOTIFIER, useExisting: IncidentGateway },
+    IncidentEventProcessor,
+    IncidentEventDispatcher,
+    IncidentService,
+    IncidentStatsService,
     IncidentConsumer,
   ],
   exports: [IncidentService],

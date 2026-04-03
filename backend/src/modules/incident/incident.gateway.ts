@@ -13,9 +13,10 @@ import { Server, Socket } from 'socket.io';
 import { ConfigService } from '@nestjs/config';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { Redis } from 'ioredis';
-import { SocketEvent, SocketRoom } from '../../common/enums/index.js';
-
-import { ChangeEntry } from '../../common/interfaces/change-entry.interface.js';
+import { SocketEvent, SocketRoom } from '../../common/enums/index';
+import { ChangeEntry } from '../../common/interfaces/change-entry.interface';
+import { IncidentNotifier } from './interfaces/incident-notifier.interface';
+import { Incident } from './entities/incident.entity';
 
 // Decorator params are static and evaluated at class-definition time (runtime
 // in NestJS, after env is loaded). process.env is intentional here because
@@ -28,7 +29,11 @@ import { ChangeEntry } from '../../common/interfaces/change-entry.interface.js';
   namespace: '/incidents',
 })
 export class IncidentGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+  implements
+    IncidentNotifier,
+    OnGatewayInit,
+    OnGatewayConnection,
+    OnGatewayDisconnect
 {
   private readonly logger = new Logger(IncidentGateway.name);
 
@@ -43,7 +48,7 @@ export class IncidentGateway
       try {
         const pubClient = new Redis(redisUrl);
         const subClient = pubClient.duplicate();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
         server.adapter(createAdapter(pubClient, subClient) as never);
         this.logger.log('Redis adapter configured for Socket.IO');
       } catch (error) {
@@ -83,23 +88,21 @@ export class IncidentGateway
     this.logger.log(`Client ${client.id} left room ${room}`);
   }
 
-  public emitCreated(incident: Record<string, unknown>): void {
+  public emitCreated(incident: Incident): void {
     this.server
       .to(SocketRoom.ALL_INCIDENTS)
       .emit(SocketEvent.INCIDENT_CREATED, { incident });
   }
 
-  public emitUpdated(
-    incident: Record<string, unknown>,
-    changes: ChangeEntry[],
-  ): void {
+  public emitUpdated(incident: Incident, changes: ChangeEntry[]): void {
     const payload = { incident, changes };
-    this.server.to(SocketRoom.ALL_INCIDENTS).emit(SocketEvent.INCIDENT_UPDATED, payload);
+    this.server
+      .to(SocketRoom.ALL_INCIDENTS)
+      .emit(SocketEvent.INCIDENT_UPDATED, payload);
 
-    const id = incident['id'] as string;
-    if (id) {
+    if (incident.id) {
       this.server
-        .to(SocketRoom.INCIDENT(id))
+        .to(SocketRoom.INCIDENT(incident.id))
         .emit(SocketEvent.INCIDENT_UPDATED, payload);
     }
   }

@@ -4,25 +4,15 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { Repository } from 'typeorm';
-import { IncidentRepository } from './incident.repository.js';
-import { IncidentGateway } from './incident.gateway.js';
-import { Incident } from './entities/incident.entity.js';
-import { IncidentTimeline } from './entities/incident-timeline.entity.js';
-import { CreateIncidentDto } from './dto/create-incident.dto.js';
-import { UpdateIncidentDto } from './dto/update-incident.dto.js';
-import { QueryIncidentDto } from './dto/query-incident.dto.js';
-import { ApiResponse } from '../../common/dto/api-response.dto.js';
-import {
-  Status,
-  QueueEvent,
-  INCIDENT_QUEUE,
-  TimelineAction,
-} from '../../common/enums/index.js';
-import { ChangeEntry } from '../../common/interfaces/change-entry.interface.js';
+import { IncidentRepository } from './incident.repository';
+import { IncidentEventDispatcher } from './incident-event.dispatcher';
+import { Incident } from './entities/incident.entity';
+import { CreateIncidentDto } from './dto/create-incident.dto';
+import { UpdateIncidentDto } from './dto/update-incident.dto';
+import { QueryIncidentDto } from './dto/query-incident.dto';
+import { ApiResponse } from '../../common/dto/api-response.dto';
+import { Status, QueueEvent } from '../../common/enums/index';
+import { diffChanges } from './utils/diff-changes';
 
 @Injectable()
 export class IncidentService {
@@ -30,11 +20,7 @@ export class IncidentService {
 
   constructor(
     private readonly incidentRepo: IncidentRepository,
-    @InjectRepository(IncidentTimeline)
-    private readonly timelineRepo: Repository<IncidentTimeline>,
-    @InjectQueue(INCIDENT_QUEUE)
-    private readonly eventQueue: Queue,
-    private readonly gateway: IncidentGateway,
+    private readonly dispatcher: IncidentEventDispatcher,
   ) {}
 
   async create(dto: CreateIncidentDto): Promise<Incident> {
@@ -47,7 +33,7 @@ export class IncidentService {
       `Incident created: ${incident.id} [${incident.severity}] ${incident.title}`,
     );
 
-    await this.enqueueEvent(QueueEvent.INCIDENT_CREATED, { incident });
+    await this.dispatcher.dispatch(QueueEvent.INCIDENT_CREATED, { incident });
 
     return incident;
   }
@@ -80,7 +66,7 @@ export class IncidentService {
       );
     }
 
-    const changes = this.diffChanges(incident, dto);
+    const changes = diffChanges(incident, dto);
 
     if (dto.status !== undefined) incident.status = dto.status;
     if (dto.severity !== undefined) incident.severity = dto.severity;
@@ -95,7 +81,7 @@ export class IncidentService {
       );
 
       if (changes.length > 0) {
-        await this.enqueueEvent(QueueEvent.INCIDENT_UPDATED, {
+        await this.dispatcher.dispatch(QueueEvent.INCIDENT_UPDATED, {
           incident: saved,
           changes,
         });
@@ -126,159 +112,9 @@ export class IncidentService {
 
     this.logger.log(`Incident soft-deleted: ${id}`);
 
-    await this.enqueueEvent(QueueEvent.INCIDENT_DELETED, {
+    await this.dispatcher.dispatch(QueueEvent.INCIDENT_DELETED, {
       id,
       incident,
     });
-  }
-
-  async getStats(): Promise<Record<string, unknown>> {
-    const statusCounts = await this.incidentRepo
-      .createQueryBuilder('incident')
-      .select('incident.status', 'status')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy('incident.status')
-      .getRawMany<{ status: string; count: string }>();
-
-    const severityCounts = await this.incidentRepo
-      .createQueryBuilder('incident')
-      .select('incident.severity', 'severity')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy('incident.severity')
-      .getRawMany<{ severity: string; count: string }>();
-
-    return {
-      byStatus: statusCounts.reduce(
-        (acc, row) => {
-          acc[row.status] = Number(row.count);
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
-      bySeverity: severityCounts.reduce(
-        (acc, row) => {
-          acc[row.severity] = Number(row.count);
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
-      total: statusCounts.reduce((sum, row) => sum + Number(row.count), 0),
-    };
-  }
-
-  private async enqueueEvent(
-    event: QueueEvent,
-    data: Record<string, unknown>,
-  ): Promise<void> {
-    try {
-      await this.eventQueue.add(event, data);
-    } catch (error) {
-      // Sync fallback: timeline creation + socket emit ONLY runs here when
-      // the queue is unavailable. When the queue IS working, the consumer
-      // (IncidentConsumer) handles timeline + socket — no duplicate path.
-      this.logger.warn(
-        `Queue unavailable for ${event}, sync fallback: ${error instanceof Error ? error.message : 'unknown'}`,
-      );
-      await this.handleEventSync(event, data);
-    }
-  }
-
-  private async handleEventSync(
-    event: QueueEvent,
-    data: Record<string, unknown>,
-  ): Promise<void> {
-    try {
-      const incident = data['incident'] as Incident | undefined;
-
-      if (event === QueueEvent.INCIDENT_CREATED && incident) {
-        await this.timelineRepo.save({
-          incidentId: incident.id,
-          action: TimelineAction.CREATED,
-        });
-        this.gateway.emitCreated(data['incident'] as Record<string, unknown>);
-      }
-
-      if (event === QueueEvent.INCIDENT_UPDATED && incident) {
-        const changes = (data['changes'] ?? []) as ChangeEntry[];
-        for (const change of changes) {
-          await this.timelineRepo.save({
-            incidentId: incident.id,
-            action: this.getTimelineAction(change.field),
-            field: change.field,
-            previousValue: change.previousValue,
-            newValue: change.newValue,
-          });
-        }
-        this.gateway.emitUpdated(
-          data['incident'] as Record<string, unknown>,
-          changes,
-        );
-      }
-
-      if (event === QueueEvent.INCIDENT_DELETED) {
-        const id = data['id'] as string;
-        if (incident) {
-          await this.timelineRepo.save({
-            incidentId: id,
-            action: TimelineAction.DELETED,
-          });
-        }
-        this.gateway.emitDeleted(id);
-      }
-    } catch (syncError) {
-      this.logger.error(
-        `Sync fallback also failed for ${event}`,
-        syncError instanceof Error ? syncError.stack : undefined,
-      );
-    }
-  }
-
-  private getTimelineAction(field: string): TimelineAction {
-    switch (field) {
-      case 'status':
-        return TimelineAction.STATUS_CHANGED;
-      case 'severity':
-        return TimelineAction.SEVERITY_CHANGED;
-      case 'description':
-        return TimelineAction.DESCRIPTION_CHANGED;
-      default:
-        return TimelineAction.CREATED;
-    }
-  }
-
-  private diffChanges(
-    existing: Incident,
-    dto: UpdateIncidentDto,
-  ): ChangeEntry[] {
-    const changes: ChangeEntry[] = [];
-
-    if (dto.status !== undefined && dto.status !== existing.status) {
-      changes.push({
-        field: 'status',
-        previousValue: existing.status,
-        newValue: dto.status,
-      });
-    }
-
-    if (dto.severity !== undefined && dto.severity !== existing.severity) {
-      changes.push({
-        field: 'severity',
-        previousValue: existing.severity,
-        newValue: dto.severity,
-      });
-    }
-
-    if (
-      dto.description !== undefined &&
-      dto.description !== existing.description
-    ) {
-      changes.push({
-        field: 'description',
-        previousValue: existing.description,
-        newValue: dto.description,
-      });
-    }
-
-    return changes;
   }
 }
